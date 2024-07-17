@@ -7,10 +7,11 @@ pub fn _xgcd(x : u128, y : u128) -> (u128, u128, u128){
     let mut u = 1;
     let mut v = 0;
 
-    let mut q = 0;
-    let mut r = 0;
-    let mut m = 0;
-    let mut n = 0;
+    let mut q ;
+    // Remove the assignment to r since it is not being used
+    let mut r;
+    let mut m;
+    let mut n;
 
     let mut x = x;
     let mut y = y;

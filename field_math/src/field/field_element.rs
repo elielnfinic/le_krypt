@@ -1,67 +1,64 @@
 use super::field::Field;
-use std::{ops::{Add, Div, Mul, Neg, Sub}, process::Output};
+use std::ops::{Add, Div, Mul, Neg, Sub};
 
-pub struct FieldElement<'a>{
-    pub value : u128,
-    pub field : &'a Field
+pub struct FieldElement<'a> {
+    pub value: u128,
+    pub field: &'a Field,
 }
 
-impl<'a> FieldElement<'a>{
-    pub fn from(value : u128, field : &'a Field) -> FieldElement{
-        FieldElement{
-            value,
-            field
-        }
+impl<'a> FieldElement<'a> {
+    pub fn from(value: u128, field: &'a Field) -> FieldElement {
+        FieldElement { value, field }
     }
 }
 
-impl<'a> Add for FieldElement<'a>{
+impl<'a> Add for FieldElement<'a> {
     type Output = FieldElement<'a>;
 
-    fn add(self, other : FieldElement<'a>) -> FieldElement<'a>{
+    fn add(self, other: FieldElement<'a>) -> FieldElement<'a> {
         self.field.add(self, other)
     }
 }
 
-impl<'a> Sub for FieldElement<'a>{
+impl<'a> Sub for FieldElement<'a> {
     type Output = FieldElement<'a>;
 
-    fn sub(self, other : FieldElement<'a>) -> FieldElement<'a>{
+    fn sub(self, other: FieldElement<'a>) -> FieldElement<'a> {
         self.field.sub(self, other)
     }
 }
 
-impl<'a> Mul for FieldElement<'a>{
+impl<'a> Mul for FieldElement<'a> {
     type Output = FieldElement<'a>;
 
-    fn mul(self, other : FieldElement<'a>) -> FieldElement<'a>{
+    fn mul(self, other: FieldElement<'a>) -> FieldElement<'a> {
         self.field.mul(self, other)
     }
 }
 
-impl<'a> Neg for FieldElement<'a>{
+impl<'a> Neg for FieldElement<'a> {
     type Output = FieldElement<'a>;
 
-    fn neg(self) -> FieldElement<'a>{
+    fn neg(self) -> FieldElement<'a> {
         self.field.negate(self)
     }
 }
 
-impl<'a> Div for FieldElement<'a>{
+impl<'a> Div for FieldElement<'a> {
     type Output = FieldElement<'a>;
 
-    fn div(self, other : FieldElement<'a>) -> FieldElement<'a>{
+    fn div(self, other: FieldElement<'a>) -> FieldElement<'a> {
         self.field.div(self, other)
     }
 }
 
 #[cfg(test)]
-mod tests{
+mod tests {
     use super::*;
-    use crate::field::field::Field; 
+    use crate::field::field::Field;
 
     #[test]
-    fn test_add(){
+    fn test_add() {
         let field = Field::new();
         let a = FieldElement::from(2, &field);
         let b = FieldElement::from(3, &field);
@@ -70,17 +67,17 @@ mod tests{
     }
 
     #[test]
-    fn test_sub(){
+    fn test_sub() {
         let field = Field::new();
         let a = FieldElement::from(2, &field);
         let b = FieldElement::from(3, &field);
         let c = a - b;
-        println!("{}", c.value);    
+        println!("{}", c.value);
         assert_eq!(c.value, 270497897142230380135924736767050121216);
     }
 
     #[test]
-    fn test_mul(){
+    fn test_mul() {
         let field = Field::new();
         let a = FieldElement::from(2, &field);
         let b = FieldElement::from(3, &field);
@@ -89,7 +86,7 @@ mod tests{
     }
 
     #[test]
-    fn test_neg(){
+    fn test_neg() {
         let field = Field::new();
         let a = FieldElement::from(2, &field);
         let b = -a;
@@ -97,7 +94,7 @@ mod tests{
     }
 
     #[test]
-    fn test_div(){
+    fn test_div() {
         let field = Field::new();
         let a = FieldElement::from(9, &field);
         let b = FieldElement::from(3, &field);

@@ -3,19 +3,19 @@ use std::ops::{Add, Mul, Neg, Sub};
 use crate::field::field_element::FieldElement;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct Exponents(Vec<i32>);
+pub struct Exponents(pub Vec<i32>);
 
 #[derive(Debug, Clone)]
-struct MPolynomial<'a> {
-    dictionary: HashMap<Exponents, FieldElement<'a>>,
+pub struct MPolynomial<'a> {
+    pub dictionary: HashMap<Exponents, FieldElement<'a>>,
 }
 
 impl<'a> MPolynomial<'a> {
-    fn new(dictionary: HashMap<Exponents, FieldElement<'a>>) -> Self {
+    pub fn new(dictionary: HashMap<Exponents, FieldElement<'a>>) -> Self {
         MPolynomial { dictionary }
     }
 
-    fn zero() -> Self {
+    pub fn zero() -> Self {
         MPolynomial {
             dictionary: HashMap::new(),
         }
@@ -55,6 +55,31 @@ impl<'a> MPolynomial<'a> {
         let mut pad = exponents.0.clone();
         pad.resize(num_variables, 0);
         Exponents(pad)
+    }
+
+    fn evaluate(&self, values: &[FieldElement<'a>]) -> FieldElement<'a> {
+        let field = values[0].field;    
+        let mut result = FieldElement::from(0, values[0].field);
+        for (exponents, coefficient) in self.dictionary.iter() {
+            let mut term = coefficient.clone();
+            for (i, &e) in exponents.0.iter().enumerate() {
+                term = term * values[i].clone() ^ FieldElement::from(e as i128, field );
+            }
+            result = result + term;
+        }
+        result
+    }
+
+    fn evaluate_symbolic(&self, values: &[FieldElement<'a>]) -> Self {
+        let mut dictionary = HashMap::new();
+        for (exponents, coefficient) in self.dictionary.iter() {
+            let mut term = coefficient.clone();
+            for (i, &e) in exponents.0.iter().enumerate() {
+                term = term * (values[i].clone() ^ FieldElement::from(e as i128, values[i].field));
+            }
+            dictionary.insert(exponents.clone(), term);
+        }
+        MPolynomial { dictionary }
     }
 }
 

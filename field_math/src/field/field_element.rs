@@ -1,5 +1,5 @@
 use super::field::Field;
-use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};
 
 #[derive(Clone, Debug, Copy)]
 pub struct FieldElement<'a> {
@@ -60,6 +60,14 @@ impl<'a> Div for FieldElement<'a> {
 impl<'a> PartialEq for FieldElement<'a> {
     fn eq(&self, other: &Self) -> bool {
         self.value == other.value
+    }
+}
+
+impl<'a> BitXor for FieldElement<'a> {
+    type Output = FieldElement<'a>;
+
+    fn bitxor(self, other: FieldElement<'a>) -> FieldElement<'a> {
+        self.field.pow(self.value, other.value)
     }
 }
 

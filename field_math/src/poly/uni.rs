@@ -1,6 +1,8 @@
-use std::ops::{Add, BitXor, Div, Mul, Rem, Sub};
+use std::{collections::HashMap, ops::{Add, BitXor, Div, Mul, Rem, Sub}};
 
 use crate::field::field_element::FieldElement;
+
+use super::multi::{Exponents, MPolynomial};
 
 /// This is the Univariate polynomial struct 
 /// 
@@ -163,6 +165,17 @@ impl<'a> Uni<'a>{
         }
         result
     }
+
+    fn lift(univariate_poly : Uni<'a>, variable_index : usize) -> MPolynomial<'a>{
+        let mut dictionary = HashMap::new();
+        for i in 0..univariate_poly.coefficients.len(){
+            let mut exponents = vec![0; univariate_poly.coefficients.len()];
+            exponents[i] = 1;
+            dictionary.insert(Exponents(exponents), univariate_poly.coefficients[i].clone());
+        }
+        MPolynomial::new(dictionary)
+    }
+
     
 }
 

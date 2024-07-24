@@ -2,12 +2,12 @@ use super::field::Field;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
 pub struct FieldElement<'a> {
-    pub value: u128,
+    pub value: i128,
     pub field: &'a Field,
 }
 
 impl<'a> FieldElement<'a> {
-    pub fn from(value: u128, field: &'a Field) -> FieldElement {
+    pub fn from(value: i128, field: &'a Field) -> FieldElement {
         FieldElement { value, field }
     }
 }
@@ -55,7 +55,7 @@ impl<'a> Div for FieldElement<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::field::field::Field;
+    use crate::field::{field::Field, DEFAULT_PRIME};
 
     #[test]
     fn test_add() {
@@ -69,11 +69,11 @@ mod tests {
     #[test]
     fn test_sub() {
         let field = Field::new();
-        let a = FieldElement::from(2, &field);
-        let b = FieldElement::from(3, &field);
+        let a = FieldElement::from(3, &field);
+        let b = FieldElement::from(2, &field);
         let c = a - b;
         println!("{}", c.value);
-        assert_eq!(c.value, 270497897142230380135924736767050121216);
+        assert_eq!(c.value, FieldElement::from(1, &field).value);
     }
 
     #[test]
@@ -90,7 +90,7 @@ mod tests {
         let field = Field::new();
         let a = FieldElement::from(2, &field);
         let b = -a;
-        assert_eq!(b.value, 270497897142230380135924736767050121215);
+        assert_eq!(b.value, DEFAULT_PRIME - 2);
     }
 
     #[test]

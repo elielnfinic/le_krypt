@@ -1,8 +1,8 @@
-use super::{_xgcd, field_element::FieldElement};
+use super::{xgcd, field_element::FieldElement};
 use super::DEFAULT_PRIME;
 
 pub struct Field {
-    p: u128,
+    p: i128,
 }
 
 impl Field {
@@ -10,7 +10,7 @@ impl Field {
         Field { p: DEFAULT_PRIME }
     }
 
-    pub fn from(p: u128) -> Field {
+    pub fn from(p: i128) -> Field {
         Field { p }
     }
 
@@ -39,7 +39,7 @@ impl Field {
     }
 
     pub fn inverse(&self, a: FieldElement) -> FieldElement {
-        let (g, x, _) = _xgcd(a.value, self.p);
+        let (g, x, _) = xgcd(a.value, self.p);
         if g != 1 {
             panic!("{} is not invertible", a.value);
         }
@@ -47,22 +47,22 @@ impl Field {
     }
 
     pub fn div(&self, a: FieldElement, b: FieldElement) -> FieldElement {
-        let (g, x, _) = _xgcd(b.value, self.p);
+        let (g, x, _x) = xgcd(b.value, self.p);
         if g != 1 {
             panic!("{} is not invertible", b.value);
         }
         FieldElement::from((a.value * x) % self.p, self)
     }
 
-    pub fn pow(&self, a: u128, b: u128) -> FieldElement {
+    pub fn pow(&self, a: i128, b: i128) -> FieldElement {
         FieldElement::from(a.pow(b as u32) % self.p, self)
     }
 
-    pub fn primitive_nth_root(&self, n: u128) -> FieldElement {
-        if self.p == 1 + 407 * (1 << 119) {
+    pub fn primitive_nth_root(&self, n: i128) -> FieldElement {
+        if self.p == DEFAULT_PRIME {
             assert!(n <= 1 << 119 && (n & (n - 1)) == 0, "Field does not have nth root of unity where n > 2^119 or not power of two.");
-            let mut root = FieldElement::from(85408008396924667383611388730472331217, self);
-            let mut order = 1 << 119;
+            let mut root = FieldElement::from(DEFAULT_PRIME, self);
+            let mut order = 1 << 64;
             while order != n {
                 root = self.pow(root.value, 2);
                 order = order / 2;
@@ -76,7 +76,7 @@ impl Field {
     pub fn sample(&self, byte_array: Vec<u8>) -> FieldElement {
         let mut acc = 0;
         for b in byte_array {
-            acc = (acc << 8) ^ b as u128;
+            acc = (acc << 8) ^ b as i128;
         }
         FieldElement::from(acc % self.p, self)
     }

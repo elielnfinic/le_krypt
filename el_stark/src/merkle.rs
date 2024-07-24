@@ -1,4 +1,4 @@
-use blake2::{Blake2b, Digest};
+use blake2::{Blake2b512, Digest};
 
 pub struct Merkle;
 
@@ -12,7 +12,7 @@ impl Merkle {
             let mid = leafs.len() / 2;
             let left_commit = Merkle::commit(&leafs[..mid]);
             let right_commit = Merkle::commit(&leafs[mid..]);
-            return Blake2b::digest(&[left_commit, right_commit].concat()).to_vec();
+            return Blake2b512::digest(&[left_commit, right_commit].concat()).to_vec();
         }
     }
 
@@ -41,15 +41,15 @@ impl Merkle {
 
         if path.len() == 1 {
             if index == 0 {
-                return root == &*Blake2b::digest(&[leaf, &path[0]].concat()).to_vec();
+                return root == &*Blake2b512::digest(&[leaf, &path[0]].concat()).to_vec();
             } else {
-                return root == &*Blake2b::digest(&[&path[0], leaf].concat()).to_vec();
+                return root == &*Blake2b512::digest(&[&path[0], leaf].concat()).to_vec();
             }
         } else {
             let new_leaf = if index % 2 == 0 {
-                Blake2b::digest(&[leaf, &path[0]].concat()).to_vec()
+                Blake2b512::digest(&[leaf, &path[0]].concat()).to_vec()
             } else {
-                Blake2b::digest(&[&path[0], leaf].concat()).to_vec()
+                Blake2b512::digest(&[&path[0], leaf].concat()).to_vec()
             };
             return Merkle::verify(root, index >> 1, &path[1..], &new_leaf);
         }

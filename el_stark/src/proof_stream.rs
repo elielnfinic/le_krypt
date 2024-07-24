@@ -2,7 +2,7 @@ use core::hash;
 
 use serde::{Deserialize, Serialize};
 use serde_pickle;
-use sha3::Sha3_256;
+use sha3::{Sha3_256, Digest};
 
 pub struct ProofStream{
     objects : Vec<Vec<u8>>,
@@ -42,10 +42,9 @@ impl ProofStream{
     }
 
     fn prover_fiat_shamir(&self, num_bytes: usize) -> Vec<u8> {
-        let mut hasher = Sha3_256::default();
-        
+        let mut hasher = Sha3_256::default();        
         hasher.update(&self.serialize());
-        hasher.finalize_xof().read(num_bytes).collect()
+        hasher.finalize()[..num_bytes].to_vec()
     }
 
     fn verifier_fiat_shamir(&self, num_bytes: usize) -> Vec<u8> {
@@ -53,7 +52,7 @@ impl ProofStream{
         let serialized_data = serde_pickle::to_vec(&serialized_objects, Default::default()).unwrap();
         let mut hasher = Sha3_256::default();
         hasher.update(&serialized_data);
-        hasher.finalize_xof().read(num_bytes).collect()
+        hasher.finalize()[..num_bytes].to_vec()
     }
 
 

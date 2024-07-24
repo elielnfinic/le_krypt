@@ -11,6 +11,10 @@ impl<'a> FieldElement<'a> {
     pub fn from(value: i128, field: &'a Field) -> FieldElement {
         FieldElement { value, field }
     }
+
+    pub fn is_zero(&self) -> bool {
+        self.value == 0
+    }
 }
 
 impl<'a> Add for FieldElement<'a> {

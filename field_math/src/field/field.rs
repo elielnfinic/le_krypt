@@ -1,6 +1,7 @@
 use super::{xgcd, field_element::FieldElement};
 use super::DEFAULT_PRIME;
 
+#[derive(Clone, Debug, Copy)]
 pub struct Field {
     p: i128,
 }
@@ -60,7 +61,7 @@ impl Field {
 
     pub fn primitive_nth_root(&self, n: i128) -> FieldElement {
         if self.p == DEFAULT_PRIME {
-            assert!(n <= 1 << 119 && (n & (n - 1)) == 0, "Field does not have nth root of unity where n > 2^119 or not power of two.");
+            assert!(n <= 1 << 64 && (n & (n - 1)) == 0, "Field does not have nth root of unity where n > 2^119 or not power of two.");
             let mut root = FieldElement::from(DEFAULT_PRIME, self);
             let mut order = 1 << 64;
             while order != n {

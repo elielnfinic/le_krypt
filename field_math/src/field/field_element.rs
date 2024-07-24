@@ -1,6 +1,7 @@
 use super::field::Field;
 use std::ops::{Add, Div, Mul, Neg, Sub};
 
+#[derive(Clone, Debug, Copy)]
 pub struct FieldElement<'a> {
     pub value: i128,
     pub field: &'a Field,
@@ -49,6 +50,12 @@ impl<'a> Div for FieldElement<'a> {
 
     fn div(self, other: FieldElement<'a>) -> FieldElement<'a> {
         self.field.div(self, other)
+    }
+}
+
+impl<'a> PartialEq for FieldElement<'a> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value == other.value
     }
 }
 

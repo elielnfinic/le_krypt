@@ -172,3 +172,32 @@ impl<'a> MPolynomial<'a> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::field::field::Field;
+
+    #[test]
+    fn test_monomial() {
+        let field = Field::new();
+        let one = field.one();
+        let x = MPolynomial::new(
+            [(Exponents(vec![1]), one.clone())]
+                .iter()
+                .cloned()
+                .collect(),
+        );
+        let x2 = x.clone() * x.clone();
+        let x3 = x.clone() * x2.clone();
+        let x4 = x2.clone() * x2.clone();
+        let x5 = x.clone() * x4.clone();
+        let x6 = x2.clone() * x4.clone();
+        let x7 = x.clone() * x6.clone();
+        let x8 = x2.clone() * x6.clone();
+        let x9 = x.clone() * x8.clone();
+
+        dbg!(&x);
+
+        assert_eq!(x.evaluate(&[one.clone()]), one.clone());
+    }
+}

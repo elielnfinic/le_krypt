@@ -1,7 +1,8 @@
-use super::field::Field;
-use std::ops::{Add, BitXor, Div, Mul, Neg, Sub};
+use super::{field::Field, xgcd};
+use std::{ops::{Add, BitXor, Div, Mul, Neg, Sub}, slice::SliceIndex};
+use serde::{Serialize, Deserialize};
 
-#[derive(Clone, Debug, Copy)]
+#[derive(Clone, Debug, Copy, Serialize)]
 pub struct FieldElement<'a> {
     pub value: i128,
     pub field: &'a Field,
@@ -14,6 +15,26 @@ impl<'a> FieldElement<'a> {
 
     pub fn is_zero(&self) -> bool {
         self.value == 0
+    }
+
+    pub fn pow(&self, exponent : u32) -> FieldElement<'a> {
+        FieldElement::from(self.value.pow(exponent) % self.field.p, self.field)
+    }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        self.value.to_be_bytes().to_vec()
+    }
+
+    pub fn to_be_bytes(&self) -> Vec<u8> {
+        self.value.to_be_bytes().to_vec()
+    }
+
+    pub fn inverse(&self) -> FieldElement<'a> {
+        let (g, x, _) = xgcd(self.value, self.field.p);
+        if g != 1 {
+            panic!("{} is not invertible", self.value);
+        }
+        FieldElement::from((x + self.field.p) % self.field.p, self.field)
     }
 }
 
@@ -70,6 +91,8 @@ impl<'a> BitXor for FieldElement<'a> {
         self.field.pow(self.value, other.value)
     }
 }
+
+
 
 #[cfg(test)]
 mod tests {

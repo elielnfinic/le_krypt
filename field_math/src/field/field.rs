@@ -1,9 +1,11 @@
 use super::{xgcd, field_element::FieldElement};
+use serde::{Serialize, Deserialize};
 use super::DEFAULT_PRIME;
 
-#[derive(Clone, Debug, Copy)]
+
+#[derive(Clone, Debug, Copy, Serialize, Deserialize)]
 pub struct Field {
-    p: i128,
+    pub p: i128,
 }
 
 impl Field {
@@ -57,6 +59,10 @@ impl Field {
 
     pub fn pow(&self, a: i128, b: i128) -> FieldElement {
         FieldElement::from(a.pow(b as u32) % self.p, self)
+    }
+
+    pub fn pow_i32(&self, a : FieldElement, b : i32) -> FieldElement {
+        FieldElement::from(a.value.pow(b as u32) % self.p, self)
     }
 
     pub fn primitive_nth_root(&self, n: i128) -> FieldElement {

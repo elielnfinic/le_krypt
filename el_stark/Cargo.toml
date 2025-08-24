@@ -3,6 +3,14 @@ name = "el_stark"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "el_stark"
+path = "src/main.rs"
+
+[lib]
+name = "el_stark"
+path = "src/lib.rs"
+
 [dependencies]
 blake2 = "0.10.6"
 serde = { version = "1.0.204", features = ["derive"] }

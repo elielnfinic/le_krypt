@@ -13,13 +13,13 @@ pub struct Uni<'a>{
 }
 
 impl<'a> Uni<'a>{
-    fn from(coefficients : Vec<FieldElement<'a>>) -> Uni<'a>{
+    pub fn from(coefficients : Vec<FieldElement<'a>>) -> Uni<'a>{
         Uni{
             coefficients
         }
     }
 
-    fn degree(self) -> i128 {
+    pub fn degree(self) -> i128 {
         if self.coefficients.len() == 0 {
             return -1;
         } 
@@ -91,11 +91,11 @@ impl<'a> Uni<'a>{
         result
     }
 
-    fn evaluate_domain(self, domain: Vec<FieldElement<'a>>) -> Vec<FieldElement<'a>>{
+    pub fn evaluate_domain(self, domain: &[FieldElement<'a>]) -> Vec<FieldElement<'a>>{
         domain.iter().map(|x| self.clone().evaluate(x.clone())).collect()
     }
 
-    fn interpolate_domain(domain: Vec<FieldElement<'a>>, values: Vec<FieldElement<'a>>) -> Uni<'a>{
+    pub fn interpolate_domain(domain: &[FieldElement<'a>], values: &[FieldElement<'a>]) -> Uni<'a>{
         let mut result = Uni::from(vec![]);
         for i in 0..domain.len(){
             let mut term_coefficients: Vec<FieldElement<'a>> = vec![values[i].clone()];
@@ -134,7 +134,7 @@ impl<'a> Uni<'a>{
         Uni::from(scaled_coefficients)
     }
 
-    fn test_colinearity(points : Vec<(FieldElement<'a>, FieldElement<'a>)>) -> bool{
+    pub fn test_colinearity(points : &[(FieldElement<'a>, FieldElement<'a>)]) -> bool{
         let mut result = true;
         for i in 0..points.len(){
             for j in 0..points.len(){
@@ -401,7 +401,7 @@ mod test{
             FieldElement::from(9, &field),
         ];
 
-        let uni = Uni::interpolate_domain(domain, values);
+        let uni = Uni::interpolate_domain(&domain, &values);
         dbg!(&uni);
         assert_eq!(uni, Uni::from(vec![
             FieldElement::from(1, &field),

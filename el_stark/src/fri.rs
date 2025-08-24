@@ -1,5 +1,6 @@
 use blake2::Blake2b512;
 use field_math::field::{field::Field, field_element::FieldElement};
+use field_math::poly::uni::Uni;
 use sha3::Digest;
 
 use crate::proof_stream::ProofStream;
@@ -109,7 +110,7 @@ impl<'a> Fri<'a> {
             offset = offset.pow(2);
         }
 
-        proof_stream.push(codeword.clone());
+        proof_stream.push(codeword.iter().map(|x| x.value).collect::<Vec<i128>>());
         codewords.push(codeword);
 
         codewords
@@ -120,7 +121,7 @@ impl<'a> Fri<'a> {
         let b_indices: Vec<usize> = c_indices.iter().map(|index| index + current_codeword.len() / 2).collect();
 
         for s in 0..self.num_colinearity_tests {
-            proof_stream.push((current_codeword[a_indices[s]].clone(), current_codeword[b_indices[s]].clone(), next_codeword[c_indices[s]].clone()));
+            proof_stream.push((current_codeword[a_indices[s]].value, current_codeword[b_indices[s]].value, next_codeword[c_indices[s]].value));
         }
 
         for s in 0..self.num_colinearity_tests {
@@ -143,13 +144,15 @@ impl<'a> Fri<'a> {
     pub fn sample_indices(&self, seed: Vec<u8>, size: usize, reduced_size: usize, number: usize) -> Vec<usize> {
         assert!(number <= 2 * reduced_size, "not enough entropy in indices wrt last codeword");
         let error_msg = format!("cannot sample more indices than available in last codeword; requested: {}, available: {}", number, reduced_size);
-        assert!(number <= reduced_size, &error_msg);
+        assert!(number <= reduced_size, "{}", error_msg);
 
         let mut indices = Vec::new();
         let mut reduced_indices = Vec::new();
-        let mut counter = 0;
+        let mut counter: u64 = 0;
         while indices.len() < number {
-            let index = Fri::sample_index(Blake2b512::digest(&(seed.clone() + &counter.to_be_bytes().to_vec())), size);
+            let mut combined = seed.clone();
+            combined.extend_from_slice(&counter.to_be_bytes());
+            let index = Fri::sample_index(Blake2b512::digest(&combined).to_vec(), size);
             let reduced_index = index % reduced_size;
             counter += 1;
             if !reduced_indices.contains(&reduced_index) {
@@ -165,7 +168,7 @@ impl<'a> Fri<'a> {
         let mut omega = self.omega.clone();
         let mut offset = self.offset.clone();
 
-        let mut roots = Vec::new();
+        let mut roots: Vec<Vec<u8>> = Vec::new();
         let mut alphas = Vec::new();
 
         for _ in 0..self.num_rounds() {
@@ -173,7 +176,10 @@ impl<'a> Fri<'a> {
             alphas.push(self.field.sample(proof_stream.verifier_fiat_shamir(32)));
         }
 
-        let last_codeword: Vec<FieldElement> = proof_stream.pull();
+        let last_codeword_values: Vec<i128> = proof_stream.pull();
+        let last_codeword: Vec<FieldElement> = last_codeword_values.iter()
+            .map(|&v| FieldElement::from(v, self.field))
+            .collect();
 
         if roots.last().unwrap() != &Merkle::commit(&last_codeword.iter().map(|x| x.to_bytes()).collect::<Vec<_>>()) {
             println!("last codeword is not well formed");
@@ -195,19 +201,19 @@ impl<'a> Fri<'a> {
             .map(|i| last_offset.clone() * last_omega.clone().pow(i as u32))
             .collect();
 
-        let poly = Polynomial::interpolate_domain(&last_domain, &last_codeword);
+        let poly = Uni::interpolate_domain(&last_domain, &last_codeword);
 
-        assert!(poly.evaluate_domain(&last_domain) == last_codeword, "re-evaluated codeword does not match original!");
+        assert!(poly.clone().evaluate_domain(&last_domain) == last_codeword, "re-evaluated codeword does not match original!");
 
-        if poly.degree() > degree {
+        if poly.clone().degree() > degree as i128 {
             println!("last codeword does not correspond to polynomial of low enough degree");
-            println!("observed degree: {}", poly.degree());
+            println!("observed degree: {}", poly.clone().degree());
             println!("but should be: {}", degree);
             return false;
         }
 
         let top_level_indices = self.sample_indices(
-            proof_stream.verifier_fiat_shamir(),
+            proof_stream.verifier_fiat_shamir(32),
             self.domain_length >> 1,
             self.domain_length >> (self.num_rounds() - 1),
             self.num_colinearity_tests,
@@ -230,10 +236,13 @@ impl<'a> Fri<'a> {
             let mut cc = Vec::new();
 
             for s in 0..self.num_colinearity_tests {
-                let (ay, by, cy) = proof_stream.pull();
-                aa.push(ay);
-                bb.push(by);
-                cc.push(cy);
+                let (ay_val, by_val, cy_val): (i128, i128, i128) = proof_stream.pull();
+                let ay = FieldElement::from(ay_val, self.field);
+                let by = FieldElement::from(by_val, self.field);
+                let cy = FieldElement::from(cy_val, self.field);
+                aa.push(ay.clone());
+                bb.push(by.clone());
+                cc.push(cy.clone());
 
                 if r == 0 {
                     polynomial_values.push((a_indices[s], ay.clone()));
@@ -244,25 +253,25 @@ impl<'a> Fri<'a> {
                 let bx = offset.clone() * omega.clone().pow(b_indices[s] as u32);
                 let cx = alphas[r].clone();
 
-                if !test_colinearity(&[(ax, ay.clone()), (bx, by.clone()), (cx, cy.clone())]) {
+                if !Uni::test_colinearity(&[(ax, ay.clone()), (bx, by.clone()), (cx, cy.clone())]) {
                     println!("colinearity check failure");
                     return false;
                 }
             }
 
             for i in 0..self.num_colinearity_tests {
-                let path = proof_stream.pull();
-                if !Merkle::verify(&roots[r], a_indices[i], path, aa[i].clone()) {
+                let path: Vec<Vec<u8>> = proof_stream.pull();
+                if !Merkle::verify(&roots[r], a_indices[i], &path, &aa[i].to_bytes()) {
                     println!("merkle authentication path verification fails for aa");
                     return false;
                 }
-                let path = proof_stream.pull();
-                if !Merkle::verify(&roots[r], b_indices[i], path, bb[i].clone()) {
+                let path: Vec<Vec<u8>> = proof_stream.pull();
+                if !Merkle::verify(&roots[r], b_indices[i], &path, &bb[i].to_bytes()) {
                     println!("merkle authentication path verification fails for bb");
                     return false;
                 }
-                let path = proof_stream.pull();
-                if !Merkle::verify(&roots[r + 1], c_indices[i], path, cc[i].clone()) {
+                let path: Vec<Vec<u8>> = proof_stream.pull();
+                if !Merkle::verify(&roots[r + 1], c_indices[i], &path, &cc[i].to_bytes()) {
                     println!("merkle authentication path verification fails for cc");
                     return false;
                 }
